@@ -3,25 +3,25 @@ import { storeJson } from '../fileModels/store.json'
 import { i18n } from '../i18n'
 import { sdk } from '../sdk'
 import { linkdingWorkDir } from '../utils'
-import {
-  restoreOwnerPassword,
-  withLinkdingSubcontainer,
-} from './linkdingUserHelpers'
+import { withLinkdingSubcontainer } from './linkdingUserHelpers'
 
 export const resetOwnerPassword = sdk.Action.withoutInput(
   'reset-owner-password',
   async ({ effects }) => {
-    const username =
-      (await storeJson.read((s) => s.adminUsername).const(effects)) ?? 'owner'
+    const { adminUsername, adminConfigured } = (await storeJson
+      .read()
+      .const(effects)) ?? { adminUsername: 'owner', adminConfigured: false }
     return {
       name: i18n('Set Owner Password'),
       description: i18n('Generate a password for the owner account.'),
-      warning: i18n(
-        'This replaces the password for ${username} and restores administrator access, including reactivating a disabled account.',
-        { username },
-      ),
+      warning: adminConfigured
+        ? i18n(
+            'This replaces the password for ${username} and restores administrator access, including reactivating a disabled account.',
+            { username: adminUsername },
+          )
+        : null,
       allowedStatuses: 'any',
-      group: i18n('Admin & Access'),
+      group: null,
       visibility: 'enabled',
     }
   },
@@ -34,14 +34,23 @@ export const resetOwnerPassword = sdk.Action.withoutInput(
       await sub.execFail(['python', 'manage.py', 'migrate', '--noinput'], {
         cwd: linkdingWorkDir,
       })
-      await sub.execFail(['python', 'manage.py', 'create_initial_superuser'], {
-        cwd: linkdingWorkDir,
-        env: { LD_SUPERUSER_NAME: username, LD_SUPERUSER_PASSWORD: password },
-      })
-    })
-    await restoreOwnerPassword(effects, {
-      username,
-      password,
+      await sub.execFail(
+        [
+          'python',
+          'manage.py',
+          'shell',
+          '-c',
+          `import os
+from django.contrib.auth import get_user_model
+user, _ = get_user_model().objects.get_or_create(username=os.environ["OWNER"])
+user.is_superuser = True
+user.is_staff = True
+user.is_active = True
+user.set_password(os.environ["PASSWORD"])
+user.save()`,
+        ],
+        { cwd: linkdingWorkDir, env: { OWNER: username, PASSWORD: password } },
+      )
     })
     await storeJson.merge(effects, {
       adminUsername: username,

@@ -25,7 +25,7 @@ Linkding is a self-hosted bookmark manager. Its source is at [sissbruecker/linkd
 
 ## Image and Container Runtime
 
-The package runs the unmodified upstream standard image, `sissbruecker/linkding`, with its entrypoint on x86_64 and aarch64. The running subcontainer is `linkding-sub`; user-management actions use temporary `linkding-action-sub` subcontainers.
+The package runs the unmodified upstream standard image, `sissbruecker/linkding`, with its entrypoint on x86_64 and aarch64. The running subcontainer is `linkding-sub`; the owner-password action and the upgrade migration use a temporary `linkding-action-sub` subcontainer.
 
 ## Volume and Data Layout
 
@@ -47,11 +47,15 @@ The `ui` interface exposes the web application and API over HTTP on internal por
 
 ## Installation and First-Run Flow
 
-The owner-password action runs Linkding's database migrations and initial-superuser command before the service starts. It generates an owner password and displays it once; Linkding stores its hash in SQLite. Subsequent starts use the upstream entrypoint without passing a superuser password.
+The owner-password action runs Linkding's database migrations and creates the owner account before the service first starts. It generates an owner password and displays it once; Linkding stores its hash in SQLite. Subsequent starts use the upstream entrypoint without passing a superuser password.
 
 ## Actions
 
-Setting the owner password creates or changes the owner account password, reactivates that account if necessary, and restores its administrator privileges. The action requests confirmation and can be repeated; save the displayed credential because it cannot be retrieved again. User-management actions read or modify the SQLite database through temporary subcontainers. Creating a user returns its credentials; deleting one is permanent. The owner username is reserved, and the owner and last superuser are protected from removal or demotion. These operations do not intentionally restart the service. Connection information is read from the current interface and can be requested repeatedly without changing it.
+The package has one action. Additional users, their passwords and their admin status are managed in Linkding's own Admin app.
+
+| Action             | When to run it                                                               | What it changes                                                                                                                                                | Repeat safety                                                                                                                                                                                  |
+| ------------------ | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Set Owner Password | On first install, when its task asks; again whenever the owner is locked out | Runs the database migrations, creates the owner account if it is missing, gives it a new generated password, and makes it an active superuser and staff member | Safe to repeat; each run replaces the owner password and asks for confirmation once one is set. The password is shown only once and is not stored by the package. The service does not restart |
 
 ## Tasks
 
@@ -90,12 +94,6 @@ interfaces:
   ui: { type: ui, port: 9090 }
 actions:
   - reset-owner-password
-  - get-connection-info
-  - add-user
-  - get-user-list
-  - remove-user
-  - reset-user-password
-  - set-user-admin-status
 tasks:
   - { action: reset-owner-password, severity: critical }
 health_checks:

@@ -5,7 +5,7 @@ export const manifest = setupManifest({
   id: 'linkding',
   title: 'Linkding',
   license: 'MIT',
-  packageRepo: 'https://github.com/Scott-Sanderson/linkding-startos',
+  packageRepo: 'https://github.com/Start9-Community/linkding-startos',
   upstreamRepo: 'https://github.com/sissbruecker/linkding',
   marketingUrl: 'https://linkding.link/',
   donationUrl: null,

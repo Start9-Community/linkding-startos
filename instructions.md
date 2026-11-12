@@ -2,7 +2,7 @@
 
 ## Documentation
 
-- [Linkding documentation](https://linkding.link/) — upstream usage and configuration guides.
+- [Linkding documentation](https://linkding.link/) ([source](https://github.com/sissbruecker/linkding/tree/master/docs/src/content/docs)) — upstream usage, admin and browser-extension guides.
 
 ## Getting set up
 
@@ -12,7 +12,7 @@
 
 ## Using Linkding
 
-Use the web interface to manage and share bookmarks. The **Add User**, **Get User List**, **Remove User**, **Reset User Password**, and **Set User Admin Status** actions manage additional accounts. **Get Connection Info** shows available interface addresses.
+Use the web interface to manage and share bookmarks. To add other users, change their passwords or make them admins, sign in as the owner and open **Settings › Admin › Users**.
 
 If you publish Linkding through a tunnel to keep your home IP private, also send its outbound traffic through that tunnel. Sites whose metadata or icons Linkding fetches can otherwise see your home IP. If you use a tunnel for another reason, you do not need to change this.
 
